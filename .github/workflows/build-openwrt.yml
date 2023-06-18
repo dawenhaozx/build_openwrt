@@ -36,10 +36,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-      - name: Initialization environment
-        id: init
-        env:
-          DEBIAN_FRONTEND: noninteractive
+    - name: Initialization environment
+      id: init
+      env:
+        DEBIAN_FRONTEND: noninteractive
         run: |
           docker rmi `docker images -q`
           [[ -n "${AGENT_TOOLSDIRECTORY}" ]] && sudo rm -rf "${AGENT_TOOLSDIRECTORY}"
@@ -69,14 +69,14 @@ jobs:
           cd openwrt/
           ${GITHUB_WORKSPACE}/${DIY_P1_SH}
 
-      - name: Update feeds
-        run: cd openwrt/ && ./scripts/feeds update -a
+    - name: Update feeds
+      run: cd openwrt/ && ./scripts/feeds update -a
 
-      - name: Install feeds
-        run: cd openwrt/ && ./scripts/feeds install -a
+    - name: Install feeds
+      run: cd openwrt/ && ./scripts/feeds install -a
 
-      - name: Load custom configuration
-        run: |
+    - name: Load custom configuration
+      run: |
           [[ -d "files" ]] && mv -f files openwrt/files
           [[ -e "${CONFIG_FILE}" ]] && cp -f ${CONFIG_FILE} openwrt/.config
           chmod +x ${DIY_P2_SH}
@@ -96,18 +96,18 @@ jobs:
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
-      - name: Compile the OpenWrt
-        id: compile
-        run: |
+    - name: Compile the OpenWrt
+      id: compile       
+      run: |
           cd openwrt/
           echo -e "$(nproc) thread compile"
           make -j$(($(nproc) + 1)) V=s || make -j1 || make -j1 V=s
           echo "status=success" >> ${GITHUB_OUTPUT}
 
-      - name: Clear server space
-        id: clean
-        if: ${{ steps.compile.outputs.status }} == 'success' && !cancelled()
-        run: |
+    - name: Clear server space
+      id: clean
+      if: ${{ steps.compile.outputs.status }} == 'success' && !cancelled()
+      run: |
           # Clean up server space
           cd openwrt/
           mkdir output
