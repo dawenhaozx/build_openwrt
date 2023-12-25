@@ -25,8 +25,8 @@ env:
   TZ: Asia/Shanghai
 
 jobs:
-  ARMv8:
-    name: ARMv8
+  N1:
+    name: N1
     runs-on: ubuntu-22.04
 
     steps:
@@ -39,7 +39,7 @@ jobs:
         cat /proc/cpuinfo | grep "cpu cores" | uniq >> CPU
         sed -i 's|[[:space:]]||g; s|^.||' CPU && sed -i 's|CPU||g; s|pucores:||' CPU
         CPUNAME="$(awk 'NR==1' CPU)" && CPUCORES="$(awk 'NR==2' CPU)"
-        curl -k --data chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" --data "text=ARMv8 正在使用 [${CPUNAME} CPU]  [${CPUCORES} 核心]  [lede] 源码 编译固件,请耐心等待..." "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=${MSG}"
+        curl -k --data chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" --data "text=N1 正在使用 [${CPUNAME} CPU]  [${CPUCORES} 核心]  [lede] 源码 编译固件,请耐心等待..." "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=${MSG}"
  
     - name: Free Disk Space (Ubuntu)
       uses: jlumbroso/free-disk-space@main
@@ -103,6 +103,13 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
+    - name: SSH connection to Actions
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
     - name: Download package
       id: package
       run: |
@@ -151,13 +158,13 @@ jobs:
     - name: Deliver package
       uses: actions/upload-artifact@v3
       with:
-        name: ARMv8_IPK ${{ env.FILE_DATE }}
+        name: N1_IPK ${{ env.FILE_DATE }}
         path: ./openwrt/bin/package/
 
     - name: Deliver firmware
       uses: actions/upload-artifact@v3
       with:
-        name: ARMv8_firmware ${{ env.FILE_DATE }}
+        name: N1_firmware ${{ env.FILE_DATE }}
         path: ./openwrt/bin/firmware/
 
     - name: Organize files
@@ -178,9 +185,8 @@ jobs:
 
     - name: copy update files
       run: |
-        cd /opt/openwrt_packit
-        cp ./files/update*.sh ./output/
-        rm -rf $(find ./output/ -name "sha256sums" -o -name "*.gz.sha" -o -name "*.tar.gz")
+        cd $GITHUB_WORKSPACE/openwrt/
+        cp .config /opt/openwrt_packit/output/
         cd $GITHUB_WORKSPACE/openwrt/bin
         cp IPK.tar.gz /opt/openwrt_packit/output/
         echo "{status}={success}" >> $GITHUB_OUTPUT
@@ -188,15 +194,15 @@ jobs:
     - name: Upload OpenWrt Firmware to Release
       uses: ncipollo/release-action@v1
       with:
-        name: ARMv8-lede ${{ env.DATE }}
+        name: N1-lede ${{ env.DATE }}
         tag: ${{ env.TAG_DATE }}
         artifacts: ${{ env.PACKAGED_OUTPUTPATH }}/*
         allowUpdates: true
         removeArtifacts: true
         token: ${{ secrets.GITHUB_TOKEN }}
         body: |
-          * ARMv8 精简固件.
-          * Default IP: 192.168.1.1
+          * N1 精简固件.
+          * Default IP: 192.168.50.3
           * Default username: root
           * Default password: password
 
@@ -221,6 +227,6 @@ jobs:
       run: |
         MSG="
         编译时间：${{ env.DATE }}
-        ARMv8 编译完成
+        N1 编译完成
         "
         curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=${MSG}"
