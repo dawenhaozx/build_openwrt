@@ -1,5 +1,5 @@
-name: N1-OpenWrt-Lede
 
+name: Build-OpenWRT
 
 on:
   repository_dispatch:
@@ -9,9 +9,6 @@ on:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
-        
-  schedule:
-    - cron: 0 0 * * 5
 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
@@ -20,127 +17,194 @@ env:
   CONFIG_FILE: .config
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
-  UPLOAD_FIRMWARE: true
+  UPLOAD_BIN_DIR: false
+  UPLOAD_FIRMWARE: false
+  UPLOAD_COWTRANSFER: false
+  UPLOAD_WETRANSFER: false
+  UPLOAD_RELEASE: false
   TZ: Asia/Shanghai
-  
+
 jobs:
-  build_openwrt:
-    name: Build OpenWrt and release
-    runs-on: ubuntu-20.04
-    permissions:
-      contents: write
-      pull-requests: write
+  ARMv8:
+    name: ARMv8
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        ref: main
+      uses: actions/checkout@v4
+
+    - name: Check server configuration
+      run: |
+        cat /proc/cpuinfo | grep name | cut -f2 -d: | uniq -c > CPU
+        cat /proc/cpuinfo | grep "cpu cores" | uniq >> CPU
+        sed -i 's|[[:space:]]||g; s|^.||' CPU && sed -i 's|CPU||g; s|pucores:||' CPU
+        CPUNAME="$(awk 'NR==1' CPU)" && CPUCORES="$(awk 'NR==2' CPU)"
+        curl -k --data chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" --data "text=ARMv8 正在使用 [${CPUNAME} CPU]  [${CPUCORES} 核心]  [lede] 源码 编译固件,请耐心等待..." "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=${MSG}"
 
     - name: Initialization environment
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
         docker rmi `docker images -q`
-        sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android /opt/ghc
-        sudo -E apt-get -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* mysql* php*
-        sudo -E apt update -y
-        sudo -E apt full-upgrade -y
-        sudo -E apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pip qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
-        sudo -E apt-get -y autoremove --purge
-        sudo -E apt-get clean
-        sudo timedatectl set-timezone "$TZ"
-        df -h
+        sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
+        sudo -E apt-mark hold grub-efi-amd64-signed
+        sudo -E apt update
+        sudo -E apt -y purge azure-cli* docker* ghc* zulu* llvm* firefox google* dotnet* powershell* openjdk* mysql* php* mongodb* dotnet* snap*
+        sudo -E apt -y full-upgrade
+        sudo -E apt -y install ack antlr3 aria2 asciidoc autoconf automake autopoint binutils bison btrfs-progs build-essential bzip2 ca-certificates ccache cmake coreutils cpio curl device-tree-compiler fastjar flex g++-multilib gawk gcc-multilib gettext git git-core gperf gzip haveged help2man intltool jq libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool libz-dev lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pigz pkgconf python2.7 python3 python3-pip python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools swig tar texinfo uglifyjs unzip upx upx-ucl vim wget xmlto xsltproc xxd xz-utils yasm zip zlib1g-dev zstd
+        sudo -E systemctl daemon-reload
+        sudo -E apt -y autoremove --purge
+        sudo -E apt clean
+        sudo -E timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
 
     - name: Clone source code
+      working-directory: /workdir
       run: |
-        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
-        cd openwrt
-        useVersionInfo=$(git show -s --date=short --format="date: %cd<br/>commit: %s<br/>commit hash: %H")
-        echo "useVersionInfo=$useVersionInfo" >> $GITHUB_ENV
-        echo "DATE=$(date "+%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
-        echo "tag_name=$(date +%Y%m%d)" >> $GITHUB_ENV
+        df -hT $PWD
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: Load custom feeds
       run: |
-        [[ -f "${FEEDS_CONF}" ]] && cp -f ${FEEDS_CONF} openwrt/feeds.conf.default
-        chmod +x ${DIY_P1_SH}
-        cd openwrt/
-        ${GITHUB_WORKSPACE}/${DIY_P1_SH}
-                      
+        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+        chmod +x $DIY_P1_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P1_SH
+
     - name: Update feeds
-      run: |
-        cd openwrt && ./scripts/feeds update -a
+      run: cd openwrt && ./scripts/feeds update -a
 
     - name: Install feeds
       run: cd openwrt && ./scripts/feeds install -a
 
     - name: Load custom configuration
       run: |
-        [[ -d "files" ]] && mv -f files openwrt/files
-        [[ -e "${CONFIG_FILE}" ]] && cp -f ${CONFIG_FILE} openwrt/.config
-        chmod +x ${DIY_P2_SH}
-        cd openwrt/
-        ${GITHUB_WORKSPACE}/${DIY_P2_SH}
-        
-    - name: SSH connection to Actions
-      uses: P3TERX/ssh2actions@v1.0.0
-      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
-      env:
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        [ -e files ] && mv files openwrt/files
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        chmod +x $DIY_P2_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P2_SH
 
     - name: Download package
+      id: package
       run: |
         cd openwrt
         make defconfig
-        make download -j8
+        make download -j16
+        find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
+    - name: cache
+      uses: HiGarfield/cachewrtbuild@main
+      with:
+        ccache: 'true'
+        mixkey: ARMv8
+        prefix: ${{ github.workspace }}/openwrt
+
     - name: Compile the firmware
+      id: compile
       run: |
         cd openwrt
-        echo -e "$(nproc) thread compile"
-        make -j$(nproc) || make -j1 V=s
-        echo "======================="
-        echo "Space usage:"
-        echo "======================="
-        df -h
-        echo "======================="
-        du -h --max-depth=1 ./ --exclude=build_dir --exclude=bin
-        du -h --max-depth=1 ./build_dir
-        du -h --max-depth=1 ./bin
-        echo "::set-output name=status::success"
+        echo -e "$(($(nproc)+1)) thread compile"
+        make -j$(($(nproc)+1)) || make -j1 V=s
+        echo "{status}={success}" >> $GITHUB_OUTPUT
+        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        echo "FILE_DATE=$(date +"%Y-%m-%d")" >> $GITHUB_ENV
+        echo "DATE=$(date +"%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
+        echo "TAG_DATE=$(date +"%m%d-%H%M%S")" >> $GITHUB_ENV
+
+    - name: Check space usage
+      if: (!cancelled())
+      run: df -hT
+
+    - name: Prepare artifact
+      run: |
+        cd ./openwrt/bin
+        mkdir -p ./firmware
+        mkdir -p ./package
+        rm -rf $(find ../bin/targets/ -name "packages" -o -name "*.buildinfo" -o -name "sha256sums" -o -name "*.manifest")
+        cp -rf $(find ../bin/targets/ -type f) ./firmware/
+        cp -rf $(find ../bin/packages/ -type f -name "*.ipk") ./package/
+        cd ./package
+        tar -zcvf IPK.tar.gz *
+        mv -f IPK.tar.gz ../
+
+    - name: Deliver package
+      uses: actions/upload-artifact@v3
+      with:
+        name: ARMv8_IPK ${{ env.FILE_DATE }}
+        path: ./openwrt/bin/package/
+
+    - name: Deliver firmware
+      uses: actions/upload-artifact@v3
+      with:
+        name: ARMv8_firmware ${{ env.FILE_DATE }}
+        path: ./openwrt/bin/firmware/
+
+    - name: Organize files
+      id: organize
+      run: |
+        cd openwrt
+        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        echo "{status}={success}" >> $GITHUB_OUTPUT
 
     - name: Package Armvirt as OpenWrt
       uses: ophub/flippy-openwrt-actions@main
       env:
         OPENWRT_ARMVIRT: openwrt/bin/targets/*/*/*.tar.gz
-        PACKAGE_SOC: s905d
-        KERNEL_VERSION_NAME: 5.15.48_6.1.6
-        KERNEL_AUTO_LATEST: true
-        WHOAMI: CHH
-        GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        PACKAGE_SOC: vplus_beikeyun_l1pro_r66s_r68s_s905_s905d_s905x2_s905x3_s912_s922x_s922x-n2
+        KERNEL_AUTO_LATEST:  true
+        KERNEL_VERSION_NAME: 5.15.85_6.1.6
+        WHOAMI: Sil
 
-    - name: Upload firmware to release
-      uses: softprops/action-gh-release@master
-      if: ${{ env.PACKAGED_STATUS == 'success' }} && !cancelled()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: copy update files
+      run: |
+        cd /opt/openwrt_packit
+        cp ./files/update*.sh ./output/
+        rm -rf $(find ./output/ -name "sha256sums" -o -name "*.gz.sha" -o -name "*.tar.gz")
+        cd $GITHUB_WORKSPACE/openwrt/bin
+        cp IPK.tar.gz /opt/openwrt_packit/output/
+        echo "{status}={success}" >> $GITHUB_OUTPUT
+
+    - name: Upload OpenWrt Firmware to Release
+      uses: ncipollo/release-action@v1
       with:
-        tag_name: OpenWrt_${{ env.PACKAGED_OUTPUTDATE }}
-        files: ${{ env.PACKAGED_OUTPUTPATH }}/*.img.xz
+        name: ARMv8-lede ${{ env.DATE }}
+        tag: ${{ env.TAG_DATE }}
+        artifacts: ${{ env.PACKAGED_OUTPUTPATH }}/*
+        allowUpdates: true
+        removeArtifacts: true
+        token: ${{ secrets.GITHUB_TOKEN }}
         body: |
-          首次使用建议全新刷写
-          * 基本信息
-          IP: 192.168.2.2
-          账户: root
-          密码: password
+          * ARMv8 精简固件.
+          * Default IP: 192.168.1.1
+          * Default username: root
+          * Default password: password
 
-    - name: Delete old releases
-      uses: dev-drprasad/delete-older-releases@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        keep_latest: 2
-        delete_tags : true
+#    - name: Delete workflow runs
+#      uses: GitRML/delete-workflow-runs@main
+#      with:
+#        token: ${{ secrets.GITHUB_TOKEN }}
+#        repository: ${{ github.repository }}
+#        retain_days: 1
+#        keep_minimum_runs: 5
+#
+#    - name: Remove old Releases
+#      uses: dev-drprasad/delete-older-releases@v0.2.0
+#      with:
+#        repo: ${{ github.repository }}
+#        keep_latest: 8
+#        delete_tags: true
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#
+    - name: Telegram notification
+      run: |
+        MSG="
+        编译时间：${{ env.DATE }}
+        ARMv8 编译完成
+        "
+        curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=${MSG}"
