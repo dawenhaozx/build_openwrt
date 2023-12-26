@@ -98,4 +98,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: N1_config ${{ env.FILE_DATE }}
-        path: /openwrt/.config
+        path: openwrt/.config
