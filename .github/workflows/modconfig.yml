@@ -94,18 +94,8 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
-    - name: Check space usage
-      if: (!cancelled())
-      run: df -hT
-
-    - name: Prepare artifact
-      run: |
-        cd ./openwrt/bin
-        mkdir -p ./firmware
-        cp openwrt/.config ./firmware/
-
-    - name: Deliver firmware
+    - name: Deliver config
       uses: actions/upload-artifact@v3
       with:
-        name: N1_firmware ${{ env.FILE_DATE }}
-        path: ./openwrt/bin/firmware/
+        name: N1_config ${{ env.FILE_DATE }}
+        path: /openwrt/.config
