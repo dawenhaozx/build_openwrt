@@ -148,17 +148,17 @@ jobs:
         tar -zcvf IPK.tar.gz *
         mv -f IPK.tar.gz ../
 
-    - name: Deliver package
-      uses: actions/upload-artifact@v3
-      with:
-        name: N1_IPK ${{ env.FILE_DATE }}
-        path: ./openwrt/bin/package/
+    # - name: Deliver package
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: N1_IPK ${{ env.FILE_DATE }}
+    #     path: ./openwrt/bin/package/
 
-    - name: Deliver firmware
-      uses: actions/upload-artifact@v3
-      with:
-        name: N1_firmware ${{ env.FILE_DATE }}
-        path: ./openwrt/bin/firmware/
+    # - name: Deliver firmware
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: N1_firmware ${{ env.FILE_DATE }}
+    #     path: ./openwrt/bin/firmware/
 
     - name: Organize files
       id: organize
@@ -178,8 +178,6 @@ jobs:
 
     - name: copy update files
       run: |
-        cd $GITHUB_WORKSPACE/openwrt/
-        cp .config /opt/openwrt_packit/output/
         cd $GITHUB_WORKSPACE/openwrt/bin
         cp IPK.tar.gz /opt/openwrt_packit/output/
         echo "{status}={success}" >> $GITHUB_OUTPUT
