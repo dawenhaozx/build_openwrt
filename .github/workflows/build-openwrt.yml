@@ -189,7 +189,7 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         name: N1-lede ${{ env.DATE }}
-        tag: ${{ env.TAG_DATE }}
+        tag: ARMv8_N1_s905d_${{ env.TAG_DATE }}
         artifacts: ${{ env.PACKAGED_OUTPUTPATH }}/*
         allowUpdates: true
         removeArtifacts: true
