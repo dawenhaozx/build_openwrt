@@ -87,6 +87,7 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
         make defconfig
+        
 
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
@@ -95,8 +96,13 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
+    - name: diffconfig
+      run: cd openwrt && ./scripts/diffconfig.sh > diffconfig
+
     - name: Deliver config
       uses: actions/upload-artifact@v3
       with:
         name: N1_config ${{ env.FILE_DATE }}
-        path: openwrt/.config
+        path: |
+               openwrt/.config
+               openwrt/diffconfig
