@@ -119,7 +119,7 @@ jobs:
       uses: HiGarfield/cachewrtbuild@main
       with:
         ccache: 'true'
-        mixkey: ARMv8
+        mixkey: N1immortalwrt
         prefix: ${{ github.workspace }}/openwrt
 
     - name: Compile the firmware
