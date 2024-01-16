@@ -14,10 +14,10 @@ env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
   REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: immortalwrt/diffconfig
-  CONFIG_FILES: immortalwrt/files
-  DIY_P1_SH: immortalwrt/diy-part1.sh
-  DIY_P2_SH: immortalwrt/diy-part2.sh
+  CONFIG_FILE: immortalwrt-master/diffconfig
+  CONFIG_FILES: immortalwrt-master/files
+  DIY_P1_SH: immortalwrt-master/diy-part1.sh
+  DIY_P2_SH: immortalwrt-master/diy-part2.sh
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: false
   UPLOAD_COWTRANSFER: false
