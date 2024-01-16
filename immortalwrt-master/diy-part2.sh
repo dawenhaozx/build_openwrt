@@ -21,9 +21,6 @@ sed -i 's/192.168.1.1/192.168.50.3/g' package/base-files/files/bin/config_genera
 # ------------------------------- Main source ends -------------------------------
 
 # ------------------------------- Other started -------------------------------
-#passwall2
-echo "src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main" >> feeds.conf.default
-echo "src-git passwall2 https://github.com/xiaorouji/openwrt-passwall2.git;main" >> feeds.conf.default
 # Add luci-app-amlogic
 rm -rf package/luci-app-amlogic
 git clone https://github.com/ophub/luci-app-amlogic.git package/luci-app-amlogic
