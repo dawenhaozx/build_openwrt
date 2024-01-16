@@ -14,12 +14,13 @@ on:
     - cron: 0 0 1 * *
 
 env:
-  REPO_URL: https://github.com/openwrt/openwrt
+  REPO_URL: https://github.com/immortalwrt/immortalwrt
   REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: imd
-  DIY_P1_SH: diy-part1.sh
-  DIY_P2_SH: diy-part2.sh
+  CONFIG_FILE: immortalwrt/diffconfig
+  CONFIG_FILES: immortalwrt/files
+  DIY_P1_SH: immortalwrt/diy-part1.sh
+  DIY_P2_SH: immortalwrt/diy-part2.sh
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: false
   UPLOAD_COWTRANSFER: false
@@ -96,17 +97,13 @@ jobs:
       run: cd openwrt && ./scripts/feeds update -a
 
     - name: Install feeds
-      run: cd openwrt && ./scripts/feeds install -a
-
-    - name: Update&&Install feeds
       run: |
-        cd openwrt
-        ./scripts/feeds update -a
+        cd openwrt && ./scripts/feeds install -a
         ./scripts/feeds install -a
      
     - name: Load custom configuration
       run: |
-        # [ -e openwrt/files ] && mv openwrt/files openwrt/files
+        [ -e $CONFIG_FILES ] && mv $CONFIG_FILES openwrt/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         chmod +x $DIY_P2_SH
         cd openwrt
@@ -125,7 +122,7 @@ jobs:
       uses: HiGarfield/cachewrtbuild@main
       with:
         ccache: 'true'
-        mixkey: ARMv8
+        mixkey: immortalwrtARMv8
         prefix: ${{ github.workspace }}/openwrt
 
     - name: Compile the firmware
@@ -195,7 +192,7 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         name: N1-lede ${{ env.DATE }}
-        tag: ARMv8_N1_s905d_${{ env.TAG_DATE }}
+        tag: immortalwrt_N1_s905d_${{ env.TAG_DATE }}
         artifacts: ${{ env.PACKAGED_OUTPUTPATH }}/*
         allowUpdates: true
         removeArtifacts: true
