@@ -16,9 +16,8 @@ on:
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
   REPO_BRANCH: openwrt-23.05
-  #FEEDS_CONF: feeds.conf.default
+  FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: immortalwrt-master/diffconfig
-  CONFIG_FILES: immortalwrt-master/files
   DIY_P1_SH: immortalwrt-master/diy-part1.sh
   DIY_P2_SH: immortalwrt-master/diy-part2.sh
   UPLOAD_BIN_DIR: false
@@ -68,7 +67,7 @@ jobs:
 
     - name: Load custom feeds
       run: |
-        [ -e "${FEEDS_CONF}" ] && cp -f ${FEEDS_CONF} openwrt/feeds.conf.default
+        [ -e "${FEEDS_CONF}" ] && mv ${FEEDS_CONF} openwrt/feeds.conf.default
         chmod +x ${DIY_P1_SH}
         cd openwrt
         $GITHUB_WORKSPACE/${DIY_P1_SH}
@@ -81,8 +80,8 @@ jobs:
      
     - name: Load custom configuration
       run: |
-        [ -e "${CONFIG_FILES}" ] && cp -f ${CONFIG_FILES} openwrt/files
-        [ -e "${CONFIG_FILE}" ] && cp -f ${CONFIG_FILE} openwrt/.config
+        #[ -e "${CONFIG_FILES}" ] && mv ${CONFIG_FILES} openwrt/files
+        [ -e "${CONFIG_FILE}" ] && mv ${CONFIG_FILE} openwrt/.config
         # echo -e 'CONFIG_DEVEL=y\nCONFIG_CCACHE=y' >> openwrt/.config
         chmod +x ${DIY_P2_SH}
         cd openwrt
