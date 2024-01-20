@@ -50,7 +50,7 @@ jobs:
       with:
         # this might remove tools that are actually needed,
         # if set to "true" but frees about 6 GB
-        tool-cache: false
+        tool-cache: true
 
         # all of these default to true, but feel free to set to
         # "false" if necessary for your workflow
@@ -58,7 +58,7 @@ jobs:
         dotnet: true
         haskell: true
         large-packages: true
-        docker-images: false
+        docker-images: true
         swap-storage: true
 
     - name: Initialization environment
@@ -117,19 +117,19 @@ jobs:
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
-    - name: cache
-      uses: HiGarfield/cachewrtbuild@main
-      with:
-        ccache: 'true'
-        mixkey: immortalwrt
-        prefix: ${{ github.workspace }}/openwrt
+    # - name: cache
+    #   uses: HiGarfield/cachewrtbuild@main
+    #   with:
+    #     ccache: 'true'
+    #     mixkey: immortalwrt
+    #     prefix: ${{ github.workspace }}/openwrt
 
     - name: Compile the firmware
       id: compile
       run: |
         cd openwrt
         echo -e "$(($(nproc)+1)) thread compile"
-        make
+        make -j$(($(nproc)+1)) || make -j1 V=s
         echo "{status}={success}" >> $GITHUB_OUTPUT
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
