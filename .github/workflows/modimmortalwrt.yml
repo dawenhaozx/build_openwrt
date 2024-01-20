@@ -1,5 +1,5 @@
 
-name: Build-immortalwrt-config
+name: Build-OpenWRT-config
 
 on:
   repository_dispatch:
@@ -14,10 +14,10 @@ env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
   REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: immortalwrt-master/diffconfig
-  CONFIG_FILES: immortalwrt-master/files
-  DIY_P1_SH: immortalwrt-master/diy-part1.sh
-  DIY_P2_SH: immortalwrt-master/diy-part2.sh
+  CONFIG_FILE: immortalwrt/.config
+  CONFIG_FILES: immortalwrt/files
+  DIY_P1_SH: immortalwrt/diy-part1.sh
+  DIY_P2_SH: immortalwrt/diy-part2.sh
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: false
   UPLOAD_COWTRANSFER: false
@@ -64,7 +64,7 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        git clone -q --single-branch --depth=1 --branch=${REPO_BRANCH} ${REPO_URL} openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: Load custom feeds
@@ -84,11 +84,12 @@ jobs:
       run: |
         [ -e $CONFIG_FILES ] && mv $CONFIG_FILES openwrt/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+         #echo -e 'CONFIG_DEVEL=y\nCONFIG_CCACHE=y' >> openwrt/.config
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
-         make defconfig
-        
+        make defconfig
+
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
       if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
@@ -96,13 +97,8 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
-    - name: diffconfig
-      run: cd openwrt && ./scripts/diffconfig.sh > diffconfig
-
     - name: Deliver config
       uses: actions/upload-artifact@v3
       with:
         name: N1_config ${{ env.FILE_DATE }}
-        path: |
-               openwrt/.config
-               openwrt/diffconfig
+        path: openwrt/.config
