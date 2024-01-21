@@ -19,9 +19,9 @@ sed -i 's/192.168.1.1/192.168.50.3/g' package/base-files/files/bin/config_genera
 #git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall.git package/openwrt-passwall
 # Add luci-app-amlogic
 rm -rf package/luci-app-amlogic
-git clone --depth=1 https://github.com/ophub/luci-app-amlogic package/openwrt-amlogic
+git clone https://github.com/ophub/luci-app-amlogic.git package/luci-app-amlogic
 # cpufreq
-sed -i 's/LUCI_DEPENDS.*/LUCI_DEPENDS:=\@\(arm\|\|aarch64\)/g' feeds/luci/applications/luci-app-cpufreq/Makefile
-sed -i 's/services/system/g' feeds/luci/applications/luci-app-cpufreq/luasrc/controller/cpufreq.lua
+#sed -i 's/LUCI_DEPENDS.*/LUCI_DEPENDS:=\@\(arm\|\|aarch64\)/g' feeds/luci/applications/luci-app-cpufreq/Makefile
+#sed -i 's/services/system/g' feeds/luci/applications/luci-app-cpufreq/luasrc/controller/cpufreq.lua
 #fix
 curl -fsSL https://raw.githubusercontent.com/dawenhaozx/n1ipv6-ipv4/main/patch/Makefile > feeds/packages/utils/xfsprogs/Makefile
