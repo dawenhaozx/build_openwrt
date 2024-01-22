@@ -77,7 +77,7 @@ jobs:
       run: |
         cd openwrt
         cp ../config/immortalwrt-23.05/config.seed .config
-        echo -e 'CONFIG_DEVEL=y\nCONFIG_CCACHE=y' >> .config
+        #echo -e 'CONFIG_DEVEL=y\nCONFIG_CCACHE=y' >> .config
         make defconfig
 
     - name: Download package
