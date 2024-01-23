@@ -115,23 +115,39 @@ jobs:
     - name: Package firmware
       uses: ffuqiangg/amlogic-s9xxx-openwrt@main
       with:
-        openwrt_path: openwrt/bin/targets/*/*/*rootfs.tar.gz
+        openwrt_path: openwrt/bin/targets/*/*/*.tar.gz
         openwrt_board: s905d
         kernel_repo: ophub/kernel
-        openwrt_kernel: 5.15.1
-        kernel_usage: flippy
+        openwrt_kernel: 6.6.1_5.15.1
+        kernel_usage: stable
         auto_kernel: true
-        image_name: N1-ImmortalWrt-${{ env.latest_release }}-${{ env.build_date }}
 
     - name: Upload firmware to release
       uses: ncipollo/release-action@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       with:
-        tag: ${{ env.build_date }}
+        tag: ImmortalWrt_N1_${{ env.build_date }}
         allowUpdates: true
         replacesArtifacts: true
-        artifacts: ${{ env.PACKAGED_OUTPUTPATH }}/N1-ImmortalWrt-${{ env.latest_release }}-${{ env.build_date }}.zip
+        artifacts: ${{ env.PACKAGED_OUTPUTPATH }}/*
+
+    - name: Delete workflow runs
+      uses: GitRML/delete-workflow-runs@main
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: ${{ github.repository }}
+        retain_days: 1
+        keep_minimum_runs: 7
+
+    - name: Remove old Releases
+      uses: dev-drprasad/delete-older-releases@v0.2.0
+      with:
+         repo: ${{ github.repository }}
+         keep_latest: 7
+         delete_tags: true
+      env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: telegram notification
       if: github.event_name == 'repository_dispatch'
@@ -140,5 +156,4 @@ jobs:
         ✅ *ImmortalWrt ${{ env.latest_release }}* 编译完成
         https://github.com/ffuqiangg/build_openwrt/releases/download/${{ env.build_date }}/N1-ImmortalWrt-${{ env.latest_release }}-${{ env.build_date }}.zip
         "
-        curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-          -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=${MSG}&parse_mode=MarkDown&disable_web_page_preview=true"
+        curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=${MSG}"
