@@ -106,14 +106,8 @@ jobs:
       run: |
         cd openwrt && make -j1 V=s
 
-    - name: Upload firmware directory
-      uses: actions/upload-artifact@main
-      with:
-        name: OpenWrt_rootfs_${{ env.build_date }}
-        path: openwrt/bin
-
     - name: Package firmware
-      uses: ffuqiangg/amlogic-s9xxx-openwrt@main
+      uses: dawenhaozx/amlogic-s9xxx-openwrt@main
       with:
         openwrt_path: openwrt/bin/targets/*/*/*.tar.gz
         openwrt_board: s905d
@@ -121,16 +115,22 @@ jobs:
         openwrt_kernel: 6.6.1_5.15.1
         kernel_usage: stable
         auto_kernel: true
+        WHOAMI: Wen
 
-    - name: Upload firmware to release
+    - name: Upload OpenWrt Firmware to Release
       uses: ncipollo/release-action@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       with:
+        name: ImmortalWrt_N1_${{ env.build_date }}
         tag: ImmortalWrt_N1_${{ env.build_date }}
-        allowUpdates: true
-        replacesArtifacts: true
         artifacts: ${{ env.PACKAGED_OUTPUTPATH }}/*
+        allowUpdates: true
+        removeArtifacts: true
+        token: ${{ secrets.GITHUB_TOKEN }}
+        body: |
+          * N1 精简ImmortalWrt固件.
+          * Default IP: 192.168.50.3
+          * Default username: root
+          * Default password: password
 
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
