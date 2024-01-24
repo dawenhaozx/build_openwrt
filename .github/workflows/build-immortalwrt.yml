@@ -38,7 +38,6 @@ on:
 env:
   FEEDS_CONF: config/${{ inputs.source_branch }}/feeds.conf.default
   CONFIG_FILE: config/${{ inputs.source_branch }}/.config
-  CONFIG_FILES: config/${{ inputs.source_branch }}/files
   DIY_P1_SH: config/${{ inputs.source_branch }}/diy-part1.sh
   DIY_P2_SH: config/${{ inputs.source_branch }}/diy-part2.sh
   TZ: Asia/Shanghai
@@ -82,7 +81,6 @@ jobs:
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
-        sudo chown -R runner:runner /home/runner/work/build_openwrt
 
     - name: Clone source code [ ${{ inputs.source_branch }} ]
       working-directory: /workdir
@@ -108,7 +106,7 @@ jobs:
 
     - name: Load custom feeds
       run: |
-        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+        [[ -f "${FEEDS_CONF}" ]] && cp -f ${FEEDS_CONF} openwrt/feeds.conf.default
         chmod +x ${DIY_P1_SH}
         cd openwrt
         ${GITHUB_WORKSPACE}/${DIY_P1_SH}
@@ -121,8 +119,8 @@ jobs:
 
     - name: Load custom configuration
       run: |
-        [ -e $CONFIG_FILES ] && mv ${CONFIG_FILES} openwrt/files
-        [ -e $CONFIG_FILE ] && mv ${CONFIG_FILE} openwrt/.config
+        [[ -d "files" ]] && mv -f files openwrt/files
+        [[ -e "${CONFIG_FILE}" ]] && cp -f ${CONFIG_FILE} openwrt/.config
         chmod +x ${DIY_P2_SH}
         cd openwrt
         ${GITHUB_WORKSPACE}/${DIY_P2_SH}
