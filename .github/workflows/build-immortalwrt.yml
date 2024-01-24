@@ -119,7 +119,7 @@ jobs:
 
     - name: Load custom configuration
       run: |
-        [[ -d "files" ]] && mv -f files openwrt/files
+        [[ -d "config/${{ inputs.source_branch }}/files" ]] && mv -f config/${{ inputs.source_branch }}/files openwrt/files
         [[ -e "${CONFIG_FILE}" ]] && cp -f ${CONFIG_FILE} openwrt/.config
         chmod +x ${DIY_P2_SH}
         cd openwrt
@@ -178,7 +178,7 @@ jobs:
     - name: Package firmware
       uses: dawenhaozx/amlogic-s9xxx-openwrt@main
       with:
-        openwrt_path: openwrt/output/*rootfs.tar.gz
+        openwrt_path: openwrt/bin/targets/*/*/*.tar.gz
         openwrt_board: s905d
         kernel_repo: ophub/kernel
         openwrt_kernel: ${{ inputs.openwrt_kernel }}
