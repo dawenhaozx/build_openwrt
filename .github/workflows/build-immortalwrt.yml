@@ -82,6 +82,7 @@ jobs:
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
+        sudo chown -R runner:runner /home/runner/work/build_openwrt
 
     - name: Clone source code [ ${{ inputs.source_branch }} ]
       working-directory: /workdir
