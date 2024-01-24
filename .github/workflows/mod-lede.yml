@@ -1,5 +1,5 @@
 
-name: Build-immortalwrt-config
+name: Build-lede-config
 
 on:
   repository_dispatch:
