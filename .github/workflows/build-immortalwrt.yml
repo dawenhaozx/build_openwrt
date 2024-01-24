@@ -62,24 +62,23 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
-      - name: Clone source code [ ${{ env.SOURCE_N }} ]
-        id: codes
-        working-directory: /workdir
-        run: |
-          # Set up compilation source code
-          if [[ "${{ env.SOURCE_N }}" == *"openwrt"* ]]; then
-              REPO_URL="https://github.com/openwrt/openwrt"
-              REPO_BRANCH="openwrt-23.05"
-          elif [[ "${{ env.SOURCE_N }}" == *"lede"* ]]; then
-              REPO_URL="https://github.com/coolsnowwolf/lede"
-              REPO_BRANCH="master"
-          elif [[ "${{ env.SOURCE_N }}" == *"immortalwrt"* ]]; then
-              REPO_URL="https://github.com/immortalwrt/immortalwrt"
-              REPO_BRANCH="openwrt-23.05"
-          else
-              echo "Unknown source code repository."
-              exit 1
-          fi
+    - name: Clone source code [ ${{ env.SOURCE_N }} ]
+      working-directory: /workdir
+      run: |
+        # Set up compilation source code
+        if [[ "${{ env.SOURCE_N }}" == *"openwrt"* ]]; then
+            REPO_URL="https://github.com/openwrt/openwrt"
+            REPO_BRANCH="openwrt-23.05"
+        elif [[ "${{ env.SOURCE_N }}" == *"lede"* ]]; then
+            REPO_URL="https://github.com/coolsnowwolf/lede"
+            REPO_BRANCH="master"
+        elif [[ "${{ env.SOURCE_N }}" == *"immortalwrt"* ]]; then
+            REPO_URL="https://github.com/immortalwrt/immortalwrt"
+            REPO_BRANCH="openwrt-23.05"
+        else
+            echo "Unknown source code repository."
+            exit 1
+        fi
 
         df -hT $PWD
         git clone -q --single-branch --depth=1 --branch=${REPO_BRANCH} ${REPO_URL} openwrt
