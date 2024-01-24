@@ -115,11 +115,11 @@ jobs:
         cd openwrt
         ${GITHUB_WORKSPACE}/${DIY_P1_SH}
 
-    - name: Update & Install feeds
-      working-directory: ./openwrt
-      run: |
-        ./scripts/feeds update -a
-        ./scripts/feeds install -a
+    - name: Update feeds
+      run: cd openwrt/ && ./scripts/feeds update -a
+
+    - name: Install feeds
+      run: cd openwrt/ && ./scripts/feeds install -a
 
     - name: Load custom configuration
       run: |
@@ -130,10 +130,10 @@ jobs:
         ${GITHUB_WORKSPACE}/${DIY_P2_SH}
 
     - name: Download package
-      working-directory: ./openwrt
       run: |
+        cd openwrt/
         make defconfig
-        make download -j16
+        make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
