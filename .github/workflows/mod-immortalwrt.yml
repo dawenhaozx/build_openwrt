@@ -9,14 +9,38 @@ on:
         description: 'SSH connection to Actions'
         required: false
         default: 'false'
+      source_branch:
+        description: "Select the source branch"
+        required: false
+        default: "immortalwrt"
+        type: choice
+        options:
+          - openwrt
+          - lede
+          - immortalwrt
+      openwrt_kernel:
+        description: "Select kernel version"
+        required: false
+        default: "5.15.1_6.1.1"
+        type: choice
+        options:
+          - 5.4.1_5.10.1
+          - 5.15.1_6.1.1
+          - 5.15.1_6.6.1
+          - 5.4.1
+          - 5.10.1
+          - 5.15.1
+          - 6.1.1
+
+  schedule:
+    - cron: 0 0 1 * *
 
 env:
-  SOURCE_N: immortalwrt
-  FEEDS_CONF: config/$SOURCE_N/feeds.conf.default
-  CONFIG_FILE: config/$SOURCE_N/config
-  CONFIG_FILES: config/$SOURCE_N/files
-  DIY_P1_SH: config/$SOURCE_N/diy-part1.sh
-  DIY_P2_SH: config/$SOURCE_N/diy-part2.sh
+  FEEDS_CONF: config/${{ inputs.source_branch }}/feeds.conf.default
+  CONFIG_FILE: config/${{ inputs.source_branch }}/.config
+  CONFIG_FILES: config/${{ inputs.source_branch }}/files
+  DIY_P1_SH: config/${{ inputs.source_branch }}/diy-part1.sh
+  DIY_P2_SH: config/${{ inputs.source_branch }}/diy-part2.sh
   TZ: Asia/Shanghai
 
 jobs:
@@ -59,23 +83,26 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
-    - name: Clone source code [ $SOURCE_N ]
-      working-directory: /workdir
-      run: |
-        # Set up compilation source code
-        if [[ "$SOURCE_N" == *"openwrt"* ]]; then
-            REPO_URL="https://github.com/openwrt/openwrt"
-            REPO_BRANCH="openwrt-23.05"
-        elif [[ "$SOURCE_N" == *"lede"* ]]; then
-            REPO_URL="https://github.com/coolsnowwolf/lede"
-            REPO_BRANCH="master"
-        elif [[ "$SOURCE_N" == *"immortalwrt"* ]]; then
-            REPO_URL="https://github.com/immortalwrt/immortalwrt"
-            REPO_BRANCH="openwrt-23.05"
-        else
-            echo "Unknown source code repository."
-            exit 1
-        fi
+     - name: Clone source code [ ${{ inputs.source_branch }} ]
+       working-directory: /workdir
+       run: |
+         # Set up compilation source code
+         if [[ "${{ inputs.source_branch }}" == *"openwrt"* ]]; then
+             REPO_URL="https://github.com/openwrt/openwrt"
+             REPO_BRANCH="main"
+             TAGS_NAME="official"
+         elif [[ "${{ inputs.source_branch }}" == *"lede"* ]]; then
+             REPO_URL="https://github.com/coolsnowwolf/lede"
+             REPO_BRANCH="master"
+             TAGS_NAME="lede"
+         elif [[ "${{ inputs.source_branch }}" == *"immortalwrt"* ]]; then
+             REPO_URL="https://github.com/immortalwrt/immortalwrt"
+             REPO_BRANCH="master"
+             TAGS_NAME="immortalwrt"
+         else
+             echo "Unknown source code repository."
+             exit 1
+         fi
 
         df -hT $PWD
         git clone -q --single-branch --depth=1 --branch=${REPO_BRANCH} ${REPO_URL} openwrt
@@ -84,9 +111,9 @@ jobs:
     - name: Load custom feeds
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
-        chmod +x $DIY_P1_SH
+        chmod +x ${DIY_P1_SH}
         cd openwrt
-        $GITHUB_WORKSPACE/$DIY_P1_SH
+        ${GITHUB_WORKSPACE}/${DIY_P1_SH}
 
     - name: Update & Install feeds
       working-directory: ./openwrt
@@ -96,11 +123,11 @@ jobs:
 
     - name: Load custom configuration
       run: |
-        [ -e $CONFIG_FILES ] && mv $CONFIG_FILES openwrt/files
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x $DIY_P2_SH
+        [ -e $CONFIG_FILES ] && mv ${CONFIG_FILES} openwrt/files
+        [ -e $CONFIG_FILE ] && mv ${CONFIG_FILE} openwrt/.config
+        chmod +x ${DIY_P2_SH}
         cd openwrt
-        $GITHUB_WORKSPACE/$DIY_P2_SH
+        ${GITHUB_WORKSPACE}/${DIY_P2_SH}
         make defconfig
 
     - name: SSH connection to Actions
