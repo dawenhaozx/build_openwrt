@@ -141,7 +141,7 @@ jobs:
       uses: HiGarfield/cachewrtbuild@main
       with:
         ccache: 'true'
-        mixkey: immortalwrt
+        mixkey: ${{ inputs.source_branch }}
         prefix: ${{ github.workspace }}/openwrt
 
     - name: Compile the firmware
