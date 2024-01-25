@@ -167,17 +167,6 @@ jobs:
         df -hT ${PWD}
         echo "status=success" >> ${GITHUB_OUTPUT}
 
-    - name: Upload OpenWrt to Release
-      uses: ncipollo/release-action@main
-      if: ${{ steps.clean.outputs.status }} == 'success' && !cancelled()
-      with:
-        tag: ${{ steps.codes.outputs.build_tag }}
-        artifacts: openwrt/output/*
-        allowUpdates: true
-        removeArtifacts: false
-        replacesArtifacts: true
-        token: ${{ secrets.GH_TOKEN }}
-
     - name: Package firmware
       if: ${{ steps.clean.outputs.status }} == 'success' && !cancelled()
       uses: dawenhaozx/amlogic-s9xxx-openwrt@main
