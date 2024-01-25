@@ -80,7 +80,7 @@ jobs:
         sudo -E apt-get clean
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
-        sudo chown $USER:$GROUPS /workdir
+        sudo chown ${USER}:${GROUPS} /workdir
 
     - name: Clone source code [ ${{ inputs.source_branch }} ]
       working-directory: /workdir
@@ -129,7 +129,7 @@ jobs:
       run: |
         cd openwrt/
         make defconfig
-        make download -j8
+        make download -j16
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
@@ -140,66 +140,66 @@ jobs:
         mixkey: ${{ inputs.source_branch }}
         prefix: ${{ github.workspace }}/openwrt
 
-    - name: Compile the firmware
+    - name: Compile the OpenWrt
       id: compile
-      continue-on-error: true
       run: |
-        cd openwrt
-        make -j$(($(nproc) + 1))
+        cd openwrt/
+        echo -e "$(nproc) thread compile"
+        make -j$(($(nproc) + 1)) V=s || make -j1 || make -j1 V=s
+        echo "status=success" >> ${GITHUB_OUTPUT}
 
-    - name: If error
-      if: steps.compile.outcome == 'failure'
+    - name: Clear server space
+      id: clean
+      if: ${{ steps.compile.outputs.status }} == 'success' && !cancelled()
       run: |
-        cd openwrt && make -j1 V=s
+        # Clean up server space
+        cd openwrt/
+        mkdir output
+        cp -f bin/targets/*/*/*rootfs.tar.gz output/
+        cp -f .config output/config
+        rm -rf $(ls . | grep -v "^output$" | xargs) 2>/dev/null
 
-    - name: Check space usage
-      if: (!cancelled())
-      run: df -hT
+        # Generate sha256sum file
+        cd output/
+        for file in *; do [[ ! -d "${file}" ]] && sha256sum "${file}" >"${file}.sha"; done
 
-    - name: Prepare artifact
-      run: |
-        cd ./openwrt/bin
-        mkdir -p ./firmware
-        mkdir -p ./package
-        rm -rf $(find ../bin/targets/ -name "packages" -o -name "*.buildinfo" -o -name "sha256sums" -o -name "*.manifest")
-        cp -rf $(find ../bin/targets/ -type f) ./firmware/
-        cp -rf $(find ../bin/packages/ -type f -name "*.ipk") ./package/
-        cd ./package
-        tar -zcvf IPK.tar.gz *
-        mv -f IPK.tar.gz ../
+        # Set output information
+        df -hT ${PWD}
+        echo "status=success" >> ${GITHUB_OUTPUT}
 
-    - name: Organize files
-      id: organize
-      run: |
-        cd openwrt
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-        echo "{status}={success}" >> $GITHUB_OUTPUT
+    - name: Upload OpenWrt to Release
+      uses: ncipollo/release-action@main
+      if: ${{ steps.clean.outputs.status }} == 'success' && !cancelled()
+      with:
+        tag: ${{ steps.codes.outputs.build_tag }}
+        artifacts: openwrt/output/*
+        allowUpdates: true
+        removeArtifacts: false
+        replacesArtifacts: true
+        token: ${{ secrets.GH_TOKEN }}
 
     - name: Package firmware
+      if: ${{ steps.clean.outputs.status }} == 'success' && !cancelled()
       uses: dawenhaozx/amlogic-s9xxx-openwrt@main
       with:
-        openwrt_path: openwrt/bin/targets/*/*/*.tar.gz
+        openwrt_path: openwrt/output/*rootfs.tar.gz
         openwrt_board: s905d
         kernel_repo: ophub/kernel
         openwrt_kernel: ${{ inputs.openwrt_kernel }}
         kernel_usage: stable
         auto_kernel: true
-
-    - name: copy update files
-      run: |
-        cd $GITHUB_WORKSPACE/openwrt/bin
-        cp IPK.tar.gz /opt/openwrt_packit/output/
-        echo "{status}={success}" >> $GITHUB_OUTPUT
-
-    - name: Upload OpenWrt Firmware to Release
-      uses: ncipollo/release-action@v1
+        builder_name: WEN
+        
+    - name: Upload the packaged OpenWrt
+      uses: ncipollo/release-action@main
+      if: ${{ env.PACKAGED_STATUS }} == 'success' && !cancelled()
       with:
-        name: ${{ inputs.source_branch }}_N1_${{ env.build_date }}
         tag: ${{ inputs.source_branch }}_N1_${{ env.build_date }}
         artifacts: ${{ env.PACKAGED_OUTPUTPATH }}/*
         allowUpdates: true
-        removeArtifacts: true
-        token: ${{ secrets.GITHUB_TOKEN }}
+        removeArtifacts: false
+        replacesArtifacts: true
+        token: ${{ secrets.GH_TOKEN }}
         body: |
           * Default IP: 192.168.50.3
           * Default username: root
