@@ -1,17 +1,27 @@
 
 config interface 'loopback'
-        option ifname 'lo'
-        option proto 'static'
-        option ipaddr '127.0.0.1'
-        option netmask '255.0.0.0'
+	option ifname 'lo'
+	option proto 'static'
+	option ipaddr '127.0.0.1'
+	option netmask '255.0.0.0'
 
 config globals 'globals'
-        option ula_prefix 'fd09:a5e0:4fd4::/48'
+	option ula_prefix 'fd09:a5e0:4fd4::/48'
 
 config interface 'lan'
-        option ifname 'eth0'
-        option proto 'static'
-        option ipaddr '192.168.50.3'
-        option netmask '255.255.255.0'
-        option gateway '192.168.50.1'
-        option dns '192.168.50.1'
+	option ifname 'eth0'
+	option proto 'static'
+	option ipaddr '192.168.50.3'
+	option netmask '255.255.255.0'
+	option gateway '192.168.50.1'
+	option dns '192.168.50.1'
+
+config interface 'docker'
+	option ifname 'docker0'
+	option proto 'none'
+	option auto '0'
+
+config device
+	option type 'bridge'
+	option name 'docker0'
+

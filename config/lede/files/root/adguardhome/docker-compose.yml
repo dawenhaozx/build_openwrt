@@ -1,0 +1,14 @@
+version: '3.9'
+
+services:
+  adguardhome:
+    image: adguard/adguardhome
+    container_name: adguardhome
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: 1m
+    network_mode: host
+    volumes:
+      - $PWD/work:/opt/adguardhome/work
+      - $PWD/conf:/opt/adguardhome/conf
