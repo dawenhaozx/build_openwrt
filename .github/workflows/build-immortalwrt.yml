@@ -136,7 +136,7 @@ jobs:
 
     - name: Generate cache mixkey
       id: gen_cache_mixkey
-      working-directory: ${{ env.WORKING_DIR }}
+      working-directory: /workdir
       run: |
         target_device_arch="$(sed -n 's/^CONFIG_TARGET_BOARD=\"\(.*\)\"/\1/p' openwrt/.config)"
         gcc_hash=$(gcc --version | sha256sum | awk '{print substr($1,1,8)}')
@@ -149,7 +149,7 @@ jobs:
       with:
         ccache: 'true'
         mixkey: ${{ steps.gen_cache_mixkey.outputs.mixkey }}
-        prefix: ${{ env.WORKING_DIR }}
+        prefix: ${{ github.workspace }}/openwrt
 
     - name: Compile the OpenWrt
       id: compile
