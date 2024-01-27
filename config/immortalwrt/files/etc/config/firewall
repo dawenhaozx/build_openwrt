@@ -1,0 +1,33 @@
+config defaults
+	option fullcone '1'
+	option fullcone6 '1'
+	option synflood_protect '1'
+	option drop_invalid '1'
+	option input 'REJECT'
+	option output 'ACCEPT'
+	option forward 'REJECT'
+
+config zone
+	option name 'lan'
+	list network 'lan'
+	option input 'ACCEPT'
+	option output 'ACCEPT'
+	option forward 'ACCEPT'
+	option masq '1'
+
+config zone 'docker'
+	option input 'ACCEPT'
+	option output 'ACCEPT'
+	option forward 'ACCEPT'
+	option name 'docker'
+	list network 'docker'
+
+config include 'passwall2'
+	option type 'script'
+	option path '/var/etc/passwall2.include'
+	option reload '1'
+
+config include 'passwall2_server'
+	option type 'script'
+	option path '/var/etc/passwall2_server.include'
+	option reload '1'
