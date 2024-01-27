@@ -34,8 +34,7 @@ config global_forwarding
 	option accept_icmp '0'
 	option use_nft '0'
 	option tcp_proxy_way 'tproxy'
-	option ipv6_tproxy '1'
-	option accept_icmpv6 '0'
+	option ipv6_tproxy '0'
 
 config global_xray
 	option sniffing '1'
