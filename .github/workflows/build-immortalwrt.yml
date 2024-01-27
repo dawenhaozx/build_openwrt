@@ -103,7 +103,7 @@ jobs:
 
         df -hT $PWD
         git clone -q --single-branch --depth=1 --branch=${REPO_BRANCH} ${REPO_URL} openwrt
-        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        ln -sf /workdir/openwrt ${GITHUB_WORKSPACE}/openwrt
 
     - name: Load custom feeds
       run: |
@@ -139,7 +139,7 @@ jobs:
       with:
         ccache: 'true'
         mixkey: ${{ inputs.source_branch }}
-        prefix: ${{ github.workspace }}/openwrt
+        prefix: ${GITHUB_WORKSPACE}/openwrt
 
     - name: Compile the OpenWrt
       id: compile
