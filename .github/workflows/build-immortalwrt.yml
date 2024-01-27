@@ -21,10 +21,11 @@ on:
       openwrt_kernel:
         description: "Select kernel version"
         required: false
-        default: "5.15.1_6.1.1"
+        default: "5.4.1_5.15.1"
         type: choice
         options:
           - 5.4.1_5.10.1
+          - 5.4.1_5.15.1
           - 5.15.1_6.1.1
           - 5.15.1_6.6.1
           - 5.4.1
@@ -81,7 +82,7 @@ jobs:
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
         sudo chown ${USER}:${GROUPS} /workdir
-        echo "build_date=$(date +%Y.%m.%d)" >> ${GITHUB_ENV}
+        echo "build_date=$(date +%Y.%m.%d-%H:%M)" >> ${GITHUB_ENV}
 
     - name: Clone source code [ ${{ inputs.source_branch }} ]
       working-directory: /workdir
@@ -180,7 +181,7 @@ jobs:
 
     - name: Package firmware
       if: ${{ steps.clean.outputs.status }} == 'success' && !cancelled()
-      uses: dawenhaozx/amlogic-s9xxx-openwrt@main
+      uses: ophub/amlogic-s9xxx-openwrt@main
       with:
         openwrt_path: openwrt/output/*rootfs.tar.gz
         openwrt_board: s905d

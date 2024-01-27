@@ -65,6 +65,11 @@ config global_subscribe
 	list filter_discard_list '剩余流量'
 	list filter_discard_list 'QQ群'
 	list filter_discard_list '官网'
+	option ss_aead_type 'shadowsocks-rust'
+	option trojan_type 'sing-box'
+	option vmess_type 'xray'
+	option vless_type 'xray'
+	option hysteria2_type 'hysteria2'
 
 config global_singbox
 	option sniff_override_destination '0'
@@ -90,6 +95,8 @@ config nodes 'myshunt'
 	option default_node 'nil'
 	option domainStrategy 'IPOnDemand'
 	option domainMatcher 'hybrid'
+	option preproxy_enabled '0'
+	option adblock '_blackhole'
 
 config shunt_rules 'adblock'
 	option remarks 'adblock'
