@@ -1,5 +1,5 @@
 
-name: Build-immortalwrt
+name: Build-immortalwrt-manual
 
 on:
   repository_dispatch:
