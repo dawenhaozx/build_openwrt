@@ -48,7 +48,7 @@ jobs:
         echo -e "🗃️ Server space usag: \n$(df -hT ${GITHUB_WORKSPACE}) \n"
 
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Initialization environment
       env:
@@ -121,7 +121,7 @@ jobs:
       run: |
         cd openwrt/
         make defconfig
-        make download -j16
+        make download -j50
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
