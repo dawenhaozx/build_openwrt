@@ -4,7 +4,7 @@ config dnsmasq
 	option dns_redirect '1'
 	option local '/lan/'
 	option domain 'lan'
-	list server '127.0.0.1#7300'
+	list server '127.0.0.1#5335'
 	option rebind_protection '0'
 	option localservice '1'
 	option readethers '1'
