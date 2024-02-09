@@ -125,22 +125,22 @@ jobs:
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
-    - name: Generate cache mixkey
-      id: gen_cache_mixkey
-      working-directory: /workdir
-      run: |
-        target_device_arch="$(sed -n 's/^CONFIG_TARGET_BOARD=\"\(.*\)\"/\1/p' openwrt/.config)"
-        gcc_hash=$(gcc --version | sha256sum | awk '{print substr($1,1,8)}')
-        ldd_hash=$(ldd --version | sha256sum | awk '{print substr($1,1,8)}')
-        mixkey="${target_device_arch}-${gcc_hash}-${ldd_hash}"
-        echo "mixkey=$mixkey" >> $GITHUB_OUTPUT
+    # - name: Generate cache mixkey
+    #   id: gen_cache_mixkey
+    #   working-directory: /workdir
+    #   run: |
+    #     target_device_arch="$(sed -n 's/^CONFIG_TARGET_BOARD=\"\(.*\)\"/\1/p' openwrt/.config)"
+    #     gcc_hash=$(gcc --version | sha256sum | awk '{print substr($1,1,8)}')
+    #     ldd_hash=$(ldd --version | sha256sum | awk '{print substr($1,1,8)}')
+    #     mixkey="${target_device_arch}-${gcc_hash}-${ldd_hash}"
+    #     echo "mixkey=$mixkey" >> $GITHUB_OUTPUT
 
-    - name: Cache
-      uses: HiGarfield/cachewrtbuild@main
-      with:
-        ccache: 'true'
-        mixkey: ${{ steps.gen_cache_mixkey.outputs.mixkey }}
-        prefix: ${{ github.workspace }}/openwrt
+    # - name: Cache
+    #   uses: HiGarfield/cachewrtbuild@main
+    #   with:
+    #     ccache: 'true'
+    #     mixkey: ${{ steps.gen_cache_mixkey.outputs.mixkey }}
+    #     prefix: ${{ github.workspace }}/openwrt
 
     - name: Compile the OpenWrt
       id: compile
