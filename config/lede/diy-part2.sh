@@ -28,6 +28,7 @@ sed -i 's/192.168.1.1/192.168.50.3/g' package/base-files/files/bin/config_genera
 rm -rf feeds/luci/applications/luci-app-passwall
 rm -rf feeds/packages/net/v2ray-geodata
 rm -rf package/luci-app-amlogic
+rm -rf feeds/packages/lang/golang
 
 # Add packages
 git clone https://github.com/sbwml/luci-app-mosdns -b v5 package/mosdns
@@ -36,6 +37,7 @@ git clone --depth=1 https://github.com/ophub/luci-app-amlogic package/openwrt-am
 git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall-packages.git package/openwrt-passwall-packages
 git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall2.git package/openwrt-passwall2
 git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall.git package/openwrt-passwall
+git clone https://github.com/sbwml/packages_lang_golang -b 22.x feeds/packages/lang/golang
 
 # fix xfsprogs
 sed -i 's,TARGET_CFLAGS += -DHAVE_MAP_SYNC,& -D_LARGEFILE64_SOURCE,' feeds/packages/utils/xfsprogs/Makefile
